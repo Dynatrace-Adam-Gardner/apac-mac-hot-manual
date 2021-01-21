@@ -1,12 +1,9 @@
 #
-# Usage: sudo DT_TENANT=***.live.dynatrace.com DT_API_TOKEN=*** DT_PAAS_TOKEN=*** ./setup.sh
+# Usage: sudo DT_TENANT=***.live.dynatrace.com DT_API_TOKEN=*** DT_PAAS_TOKEN=*** ~/setup.sh
 # 
 # Create a t3.medium with 20GB HDD
 # Open ports 22 and 80 to external traffic
 # 
-# DT_TENANT variable is either (WITHOUT https:// and TRAILING SLASH):
-# Dynatrace SaaS tenant: {your-environment-id}.live.dynatrace.com
-# Dynatrace-managed tenant: {your-domain}/e/{your-environment-id}
 # This file:
 # - Downloads monaco 1.0.1 as ./monaco
 # - Installs k3s, Dynatrace OneAgent and Istio
@@ -22,12 +19,6 @@
 # v1 = No delay (blue banner)
 # v2 = 1s delay (green banner)
 # v3 = 250ms delay (orange banner)
-
-# DT_TENANT MUST be set without leading https:// or trailing slashes
-# DT_TENANT=***.live.dynatrace.com
-# DT_API_TOKEN must have: *** permissions
-# DT_API_TOKEN=***
-# DT_PAAS_TOKEN=***
 
 
 ##########################################
@@ -53,6 +44,8 @@ cd
 # Download Monaco
 wget https://github.com/dynatrace-oss/dynatrace-monitoring-as-code/releases/download/$monaco_version/monaco-linux-amd64 -O ~/monaco
 chmod +x ~/monaco
+# Add to usr/local/bin so we can run "monaco" not "~/monaco"
+cp ~/monaco /usr/local/bin
 
 git clone https://github.com/Dynatrace-Adam-Gardner/apac-mac-hot-manual
 cd ~/apac-mac-hot-manual/box
@@ -141,6 +134,14 @@ kubectl scale deployment staging-web -n customer-b --replicas=0 && kubectl scale
 kubectl scale deployment prod-web -n customer-b --replicas=0 && kubectl scale deployment prod-web -n customer-b --replicas=1
 kubectl scale deployment staging-web -n customer-c --replicas=0 && kubectl scale deployment staging-web -n customer-c --replicas=1
 kubectl scale deployment prod-web -n customer-c --replicas=0 && kubectl scale deployment prod-web -n customer-c --replicas=1
+
+# Add host properties
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_a_staging=http://staging.customera.$VM_IP.nip.io
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_b_staging=http://staging.customerb.$VM_IP.nip.io
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_c_staging=http://staging.customerc.$VM_IP.nip.io
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_a_production=http://customera.$VM_IP.nip.io
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_b_production=http://customerb.$VM_IP.nip.io
+sudo /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-property customer_c_production=http://customerc.$VM_IP.nip.io
 
 # Start Load Gen against customer sites
 echo "Starting Load Generator for Customers A, B & C"
