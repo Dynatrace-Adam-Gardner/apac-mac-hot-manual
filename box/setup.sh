@@ -27,6 +27,14 @@
 
 monaco_version=v1.0.1
 
+# check for some dependencies
+which curl > /dev/null
+if [ $? -ne 0 ]; then echo "curl missing"; exit 1; fi
+which wget > /dev/null
+if [ $? -ne 0 ]; then echo "wget missing"; exit 1; fi
+which snap > /dev/null
+if [ $? -ne 0 ]; then echo "snapd missing"; exit 1; fi
+
 # Install jq
 sudo snap install jq
 
